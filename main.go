@@ -1,6 +1,7 @@
 package main
 
 import (
+	"botTG_AI/codeai"
 	"log"
 	"os"
 	"strconv"
@@ -13,6 +14,11 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Aviso: Arquivo .env não encontrado ou não carregado corretamente")
+	}
+
+	openaiKey := os.Getenv("OPENAI_API_KEY")
+	if openaiKey == "" {
+		log.Panic("Erro: OPENAI_API_KEY não foi definido")
 	}
 
 	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
@@ -51,6 +57,17 @@ func main() {
 			switch update.Message.Command() {
 			case "start":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Hello World")
+				bot.Send(msg)
+			case "generate":
+				prompt := update.Message.CommandArguments()
+				if prompt == "" {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Por favor, forneça um prompt após /generate")
+					bot.Send(msg)
+					continue
+				}
+				code := codeai.GenerateCode(prompt, openaiKey, debugMode)
+
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, code)
 				bot.Send(msg)
 			}
 		}
